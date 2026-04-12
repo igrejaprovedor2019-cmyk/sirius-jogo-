@@ -2,209 +2,215 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sirius: A Ascensão do Desbravador</title>
+    <title>Sirius: Jornada Estelar</title>
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #050b18;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white;
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;500&display=swap');
+
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background: #02040a; 
+            font-family: 'Roboto', sans-serif; color: white;
         }
 
-        #game-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at bottom, #1a2a6c, #b21f1f, #050b18);
-            transition: background 2s;
+        #game-viewport {
+            position: relative; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #0a192f 0%, #02040a 100%);
+        }
+
+        /* Elementos Decorativos de Fundo */
+        .nebula {
+            position: absolute; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+            filter: blur(50px); pointer-events: none;
         }
 
         /* O Desbravador */
-        #desbravador {
-            position: absolute;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            transition: bottom 1.5s ease-in-out, transform 0.5s;
-            text-align: center;
-        }
-
-        .lenco {
-            width: 20px;
-            height: 20px;
-            background-color: #FFD700; /* Amarelo */
-            margin: 0 auto;
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-        }
-
-        .corpo {
-            width: 30px;
-            height: 40px;
-            background-color: #333;
-            margin: -5px auto 0;
-            border-radius: 5px;
-        }
-
-        /* UI */
-        #ui-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #FFD700;
-            max-width: 300px;
-        }
-
-        #btn-subir {
-            display: none;
-            background-color: #FFD700;
-            color: #000;
-            border: none;
-            padding: 10px 20px;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-
-        #btn-subir:hover { background-color: #fff; }
-
-        /* Estrelas */
-        .estrela-alvo {
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            background: radial-gradient(circle, #fff, transparent);
-            border-radius: 50%;
-            box-shadow: 0 0 20px #fff;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            font-size: 12px;
-            font-weight: bold;
-            color: gold;
-        }
-
-        /* Tela Final */
-        #tela-final {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+        #player {
+            position: absolute; width: 40px; height: 60px;
+            bottom: 20px; left: 50%; transform: translateX(-50%);
+            transition: all 1.8s cubic-bezier(0.45, 0.05, 0.55, 0.95);
             z-index: 100;
         }
+        .player-visual {
+            width: 100%; height: 100%; position: relative;
+            background: #111; border-radius: 4px;
+            box-shadow: 0 0 15px rgba(255,215,0,0.3);
+        }
+        .scarf {
+            position: absolute; top: 12px; width: 100%; height: 12px;
+            background: #FFD700; /* Amarelo liso conforme pedido */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
 
-        #img-final {
-            width: 80%;
-            max-width: 600px;
-            border: 3px solid #FFD700;
-            border-radius: 15px;
+        /* Estrelas de Missão */
+        .star-point {
+            position: absolute; width: 80px; height: 80px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; transition: transform 0.3s;
+        }
+        .star-glow {
+            width: 20px; height: 20px; background: white;
+            border-radius: 50%; box-shadow: 0 0 30px 5px white;
+            animation: pulse 2s infinite;
+        }
+        .star-name {
+            margin-top: 10px; font-family: 'Orbitron', sans-serif;
+            font-size: 10px; color: gold; letter-spacing: 1px;
+        }
+
+        /* Interface de Missão (Centralizada e Elegante) */
+        #mission-overlay {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px; background: rgba(5, 10, 20, 0.95);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            padding: 30px; border-radius: 20px;
+            text-align: center; display: none;
+            backdrop-filter: blur(10px); box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        #mission-overlay h2 { font-family: 'Orbitron'; color: gold; margin-top: 0; }
+        #mission-overlay p { line-height: 1.6; font-weight: 300; }
+
+        .input-group { margin-top: 20px; }
+        input {
+            background: rgba(255,255,255,0.05); border: 1px solid #333;
+            padding: 12px; color: white; width: 80%; border-radius: 8px;
+            text-align: center; font-size: 16px; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: gold; background: rgba(255,255,255,0.1); }
+
+        .btn-action {
+            margin-top: 15px; padding: 12px 30px;
+            background: gold; color: black; border: none;
+            border-radius: 8px; font-weight: bold; cursor: pointer;
+            font-family: 'Orbitron'; transition: 0.3s;
+        }
+        .btn-action:hover { transform: scale(1.05); background: #fff; }
+
+        /* Feedback na Tela */
+        #feedback { margin-top: 15px; font-size: 14px; min-height: 20px; }
+
+        /* Tela Final */
+        #final-screen {
+            display: none; position: fixed; inset: 0;
+            background: #000; z-index: 1000;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        #final-screen img { width: 85%; max-width: 600px; border-radius: 15px; border: 2px solid gold; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 40px 10px white; }
+            100% { transform: scale(1); opacity: 0.8; }
         }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div id="ui-panel">
-        <h2 id="nome-estrela">Início</h2>
-        <p id="missao-texto">Clique em Iniciar para decolar!</p>
-        <div id="quiz-area"></div>
-        <button id="btn-subir" onclick="proximaFase()">SUBIR ↑</button>
-        <button id="btn-start" onclick="iniciarJogo()">INICIAR DECOLAGEM</button>
+<div id="game-viewport">
+    <div class="nebula" style="top: 10%; left: 20%;"></div>
+    <div class="nebula" style="bottom: 10%; right: 10%;"></div>
+
+    <div id="player">
+        <div class="player-visual">
+            <div class="scarf"></div>
+        </div>
     </div>
 
-    <div id="desbravador">
-        <div class="lenco"></div>
-        <div class="corpo"></div>
-        <small>SIRIUS</small>
+    <div id="mission-overlay">
+        <h2 id="m-title">MISSÃO</h2>
+        <p id="m-text">Texto da missão aqui...</p>
+        <div class="input-group">
+            <input type="text" id="m-input" placeholder="Sua resposta..." autocomplete="off">
+            <div id="feedback"></div>
+            <button class="btn-action" onclick="validateMission()">CARREGAR ESTRELA</button>
+        </div>
     </div>
-
-    <div id="estrela-visual" class="estrela-alvo"></div>
 </div>
 
-<div id="tela-final">
-    <h1 style="color: #FFD700;">PARABÉNS!</h1>
-    <p>Você completou tudo e foi abençoado(a)!</p>
-    <img id="img-final" src="https://i.imgur.com/8N6y7Vn.jpg" alt="Benção Final">
-    <br>
-    <button onclick="location.reload()" style="padding: 10px;">RECOMEÇAR</button>
+<div id="final-screen">
+    <h1 style="color:gold; font-family: 'Orbitron';">SIRIUS ALCANÇADA</h1>
+    <p>Você completou a jornada e foi abençoado(a)!</p>
+    <img src="https://i.imgur.com/8N6y7Vn.jpg" alt="Benção Final">
+    <button class="btn-action" style="margin-top:30px;" onclick="location.reload()">REINICIAR</button>
 </div>
 
 <script>
-    const fases = [
-        { nome: "Órion", missao: "Qual é a cor oficial do lenço de Desbravador?", resposta: "amarelo", pos: "20%" },
-        { nome: "Andrômeda", missao: "Quantos pontos tem a estrela da saúde?", resposta: "8", pos: "35%" },
-        { nome: "Pegasus", missao: "O que significa Sirius no nosso clube?", resposta: "estrela", pos: "55%" },
-        { nome: "Cruzeiro do Sul", missao: "Qual livro da bíblia diz: 'Os que ensinam brilharão como estrelas'?", resposta: "daniel", pos: "70%" },
-        { nome: "SIRIUS", missao: "Você está pronto para brilhar? (Digite: sim)", resposta: "sim", pos: "85%" }
+    const db = [
+        { name: "ANDRÔMEDA", q: "Para iniciar a decolagem, qual a cor oficial do lenço que o Desbravador usa no pescoço?", a: "amarelo", b: "15%", l: "20%" },
+        { name: "PEGASUS", q: "Complete o Voto: 'Pela graça de Deus, serei puro, amigo e...?'", a: "leal", b: "35%", l: "70%" },
+        { name: "ESTRELA DA MANHÃ", q: "Quantas classes regulares existem no Clube de Desbravadores?", a: "6", b: "55%", l: "30%" },
+        { name: "ALPHA CENTAURI", q: "Qual o nome do nosso Clube?", a: "sirius", b: "75%", l: "65%" },
+        { name: "SIRIUS", q: "Daniel 12:3 diz que os que ensinam a justiça brilharão como as...?", a: "estrelas", b: "88%", l: "50%" }
     ];
 
-    let faseAtual = -1;
+    let currentStage = 0;
+    const player = document.getElementById('player');
+    const overlay = document.getElementById('mission-overlay');
+    const feedback = document.getElementById('feedback');
+    const input = document.getElementById('m-input');
 
-    function iniciarJogo() {
-        document.getElementById('btn-start').style.display = 'none';
-        proximaFase();
+    // Inicialização: Cria as estrelas no mapa
+    db.forEach((s, i) => {
+        const el = document.createElement('div');
+        el.className = 'star-point';
+        el.style.bottom = s.b; el.style.left = s.l;
+        el.innerHTML = `<div class="star-glow"></div><div class="star-name">${s.name}</div>`;
+        document.getElementById('game-viewport').appendChild(el);
+    });
+
+    // Inicia a movimentação
+    setTimeout(goToNextStar, 1000);
+
+    function goToNextStar() {
+        const data = db[currentStage];
+        player.style.bottom = data.b;
+        player.style.left = data.l;
+        
+        // Esconde interface enquanto voa
+        overlay.style.display = 'none';
+
+        setTimeout(() => {
+            overlay.style.display = 'block';
+            document.getElementById('m-title').innerText = data.name;
+            document.getElementById('m-text').innerText = data.q;
+            input.value = "";
+            input.focus();
+            feedback.innerText = "";
+        }, 1800);
     }
 
-    function proximaFase() {
-        faseAtual++;
-        
-        if (faseAtual >= fases.length) {
-            finalizarJogo();
-            return;
-        }
+    function validateMission() {
+        const userVal = input.value.toLowerCase().trim();
+        const correctVal = db[currentStage].a.toLowerCase();
 
-        const dados = fases[faseAtual];
-        
-        // Atualiza UI
-        document.getElementById('nome-estrela').innerText = "Estrela: " + dados.nome;
-        document.getElementById('missao-texto').innerText = "MISSÃO: " + dados.missao;
-        document.getElementById('btn-subir').style.display = 'none';
-        
-        // Input de resposta
-        const quizArea = document.getElementById('quiz-area');
-        quizArea.innerHTML = `<input type="text" id="input-resposta" placeholder="Sua resposta...">
-                              <button onclick="verificarResposta()">Confirmar</button>`;
-        
-        // Move o desbravador visualmente
-        const player = document.getElementById('desbravador');
-        player.style.bottom = dados.pos;
-
-        // Mostra a estrela no cenário
-        const estrela = document.getElementById('estrela-visual');
-        estrela.style.display = 'flex';
-        estrela.style.bottom = dados.pos;
-        estrela.style.right = (Math.random() * 70 + 10) + "%";
-        estrela.innerText = dados.nome;
-    }
-
-    function verificarResposta() {
-        const resp = document.getElementById('input-resposta').value.toLowerCase();
-        if (resp.includes(fases[faseAtual].resposta)) {
-            alert("Missão Cumprida!");
-            document.getElementById('quiz-area').innerHTML = "<b style='color:lime'>Fase Concluída!</b>";
-            document.getElementById('btn-subir').style.display = 'block';
+        if(userVal.includes(correctVal)) {
+            feedback.innerHTML = "<span style='color:lime'>✓ CARREGAMENTO CONCLUÍDO!</span>";
+            setTimeout(() => {
+                currentStage++;
+                if(currentStage < db.length) {
+                    goToNextStar();
+                } else {
+                    showFinal();
+                }
+            }, 1000);
         } else {
-            alert("Resposta errada! Tente novamente.");
+            feedback.innerHTML = "<span style='color:#ff4444'>✗ RESPOSTA INCORRETA. TENTE NOVAMENTE.</span>";
+            input.style.borderColor = "#ff4444";
+            setTimeout(() => { input.style.borderColor = "#333"; }, 500);
         }
     }
 
-    function finalizarJogo() {
-        document.getElementById('game-container').style.display = 'none';
-        document.getElementById('tela-final').style.display = 'flex';
+    function showFinal() {
+        overlay.style.display = 'none';
+        document.getElementById('final-screen').style.display = 'flex';
     }
+
+    // Permitir "Enter" para responder
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") validateMission();
+    });
 </script>
 
 </body>
