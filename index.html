@@ -1,148 +1,60 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIRIUS: O Desafio dos Herdeiros</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #FFD700; /* Amarelo sólido solicitado */
-            --bg-dark: #02060B;
-            --panel-bg: rgba(2, 6, 23, 0.95);
+// Configurações Globais
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let estrelas = [];
+let missoes = [
+    { nome: "Sirius", x: 200, y: 150, completada: false, pergunta: "Qual a estrela mais brilhante?", resposta: "Sirius" },
+    { nome: "Andromeda", x: 500, y: 300, completada: false, pergunta: "Andromeda é uma galáxia ou planeta?", resposta: "Galáxia" },
+    { nome: "Pegasus", x: 800, y: 100, completada: false, pergunta: "Em qual constelação está Pegasus?", resposta: "Pegaso" }
+];
+
+// 1. Criação das Estrelas Animadas
+function criarEstrelas() {
+    for (let i = 0; i < 150; i++) {
+        estrelas.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            tamanho: Math.random() * 2,
+            brilho: Math.random(),
+            velocidadeBrilho: 0.02 + Math.random() * 0.05
+        });
+    }
+}
+
+// 2. Desenho e Animação
+function desenharCenario() {
+    // Fundo Espacial
+    ctx.fillStyle = '#050a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Desenhar Estrelas com Brilho
+    estrelas.forEach(estrela => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${estrela.brilho})`;
+        ctx.beginPath();
+        ctx.arc(estrela.x, estrela.y, estrela.tamanho, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Lógica de Piscar
+        estrela.brilho += estrela.velocidadeBrilho;
+        if (estrela.brilho > 1 || estrela.brilho < 0.2) {
+            estrela.velocidadeBrilho *= -1;
         }
+    });
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { height: 100%; background: var(--bg-dark); color: #fff; font-family: 'Rajdhani', sans-serif; overflow: hidden; }
+    // Desenhar Destinos das Missões
+    missoes.forEach(astro => {
+        ctx.fillStyle = astro.completada ? '#ffff00' : '#ffffff'; // Amarelo se completada
+        ctx.beginPath();
+        ctx.arc(astro.x, astro.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillText(astro.nome, astro.x - 20, astro.y + 25);
+    });
+}
 
-        /* --- BACKGROUND GALÁXIA --- */
-        #galaxy-map {
-            position: absolute; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #0a1e3c 0%, #000 100%);
-            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1), filter 1s;
-        }
-
-        .star-nebula {
-            position: absolute; border-radius: 50%; background: white;
-            opacity: 0.4; animation: twinkle 3s infinite alternate;
-        }
-
-        /* --- DESBRAVADOR (O JOGADOR) --- */
-        #pathfinder {
-            position: absolute; width: 45px; height: 65px;
-            bottom: 30px; left: 50%; transform: translateX(-50%);
-            transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 500; display: none;
-        }
-        .pf-head { 
-            width: 100%; height: 100%; background: #111; border-radius: 8px 8px 15px 15px;
-            position: relative; border: 2px solid #222; overflow: hidden;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-        }
-        .pf-scarf { 
-            position: absolute; top: 15px; width: 100%; height: 18px; 
-            background: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-
-        /* --- VISÃO DE SUPERFÍCIE (PLANETA/ESTRELA) --- */
-        #surface-view {
-            position: absolute; inset: 0;
-            background: linear-gradient(to top, #000 0%, #0c1a31 100%);
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 1000;
-        }
-        .horizon {
-            position: absolute; bottom: 0; width: 150%; height: 35%;
-            background: #050505; border-top: 4px solid #111;
-            border-radius: 50% 50% 0 0; left: -25%;
-        }
-
-        /* Versão de pouso do desbravador */
-        .pf-pouso { position: absolute; bottom: 30%; transform: scale(1.5) translateX(-30%); z-index: 1100; width: 45px;}
-
-        /* --- UI DE MISSÃO --- */
-        #mission-panel {
-            position: relative; width: 500px;
-            background: var(--panel-bg);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            padding: 40px; border-radius: 24px;
-            text-align: center; backdrop-filter: blur(15px);
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            z-index: 1200; transform: translateY(-30px);
-        }
-
-        #mission-panel h2 { font-family: 'Orbitron'; color: var(--gold); letter-spacing: 4px; margin: 0 0 5px 0; }
-        #mission-panel h4 { font-family: 'Outfit'; color: #475569; margin: 0 0 20px 0; font-weight: 300;}
-        #mission-panel p { font-size: 1.1rem; color: #cbd5e1; line-height: 1.6; min-height: 80px; margin-bottom: 25px;}
-
-        .loading-track {
-            width: 100%; height: 8px; background: #0f172a; border-radius: 4px;
-            margin: 20px 0; overflow: hidden; border: 1px solid #1e293b;
-        }
-        .loading-fill { width: 0%; height: 100%; background: var(--gold); transition: width 1s ease; box-shadow: 0 0 15px var(--gold); }
-
-        .input-wrapper input {
-            width: 85%; padding: 15px; background: #020617; border: 1px solid #334155;
-            color: white; border-radius: 12px; font-size: 1.1rem; text-align: center;
-            outline: none; transition: 0.3s;
-        }
-        .input-wrapper input:focus { border-color: var(--gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
-
-        .btn-boost {
-            margin-top: 25px; width: 100%; padding: 18px;
-            background: var(--gold); color: #000; font-family: 'Orbitron';
-            font-weight: bold; border: none; border-radius: 12px;
-            cursor: pointer; display: none; transition: 0.3s;
-        }
-        .btn-boost:hover { background: white; transform: scale(1.02); }
-
-        #status-msg { margin-top: 15px; font-size: 0.9rem; font-weight: 600; letter-spacing: 1px; }
-
-        /* --- TELA FINAL (SUA IMAGEM DO ABENÇOADO) --- */
-        #final-screen {
-            display: none; position: fixed; inset: 0; background: #000;
-            z-index: 2000; flex-direction: column; align-items: center; justify-content: center;
-        }
-        #final-screen img { width: 90%; max-width: 650px; border-radius: 20px; border: 4px solid var(--gold); box-shadow: 0 0 60px rgba(255, 215, 0, 0.3); }
-
-        @keyframes twinkle { from { opacity: 0.2; } to { opacity: 0.7; } }
-    </style>
-</head>
-<body>
-
-<div id="galaxy-map">
-    </div>
-
-<div id="pathfinder">
-    <div class="pf-head">
-        <div class="pf-scarf"></div>
-    </div>
-</div>
-
-<div id="surface-view">
-    <div class="horizon"></div>
-    <div class="pf-pouso">
-        <div class="pf-head" style="width: 45px; height: 65px;">
-            <div class="pf-scarf"></div>
-        </div>
-    </div>
-
-    <div id="mission-panel">
-        <h2 id="star-name">NOME DA ESTRELA</h2>
-        <h4 id="star-mode">MODO JORNADA</h4>
-        <p id="star-mission">Aguardando conexão estelar...</p>
-        
-        <div class="loading-track"><div class="loading-fill" id="progress"></div></div>
-        
-        <div class="input-wrapper">
-            <input type="text" id="user-ans" placeholder="DIGITE A RESPOSTA..." autocomplete="off">
-            <div id="status-msg"></div>
-            <button class="btn-boost" id="btn-up" onclick="takeOff()">SUBIR PARA A PRÓXIMA ↑</button>
-        </div>
-    </div>
-</div>
-
-<div id="final-screen">
-    <h1 style="font-family:'Orbitron'; color:var(--gold); font-size: 2.5rem; margin-bottom: 10px;">JORNADA CONCLUÍDA</h1>
-    <p style="font-size: 1.2rem; margin-bottom: 30px;">"Você completou tudo e foi abençoado(a)!"</p>
-    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAwAAAAIACAYAAAA19gs6AAAQAElEQVR4AezcS3JkSW4FUKq1PmlQK5FWIq2kBtL69ClWVlbSSUbE+/gHgJ+2zkwi4j134ICTa23W/3jzHwIECBAgQIAAAQIEthEQALZZtUEJfBZQEyBAgAABAjsKCAA7bt3MBAgQILC3gOkJENhaQADYev2GJ0CAAAECBAgQ2EngfVYB4F3BHwIECBAgQIAAAQKbCAgAmyzamARaARUBAgQIECCwq4AAsOvmzU2AAAECewqYmgCB7QUEgO1/BQAQIECAAAECBAjsIPBzRgHgp4R/CRAgQIAAAQIECGwgIABssGQjEmgFVAQIECBAgMDOAgLAzts3OwECBAjsJWBaAgQI/CEgAPyB4L8ECBAgQIAAAQIEKgt8nE0A+KjhZwIECBAgQIAAAQLFBQSA4gs2HoFWQRWAAAECBAjsLiAA7P4bYH4CBAgQ2EPAlAQIEPhLQAD4C8I/BAgQIECAAAECBCoKfJ5JAPgsoiZAgAABAgQIECBQWE
+// Inicialização
+criarEstrelas();
+function loop() {
+    desenharCenario();
+    requestAnimationFrame(loop);
+}
+loop();
