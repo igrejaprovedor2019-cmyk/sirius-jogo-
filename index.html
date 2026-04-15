@@ -1,60 +1,77 @@
-// Configurações Globais
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-let estrelas = [];
-let missoes = [
-    { nome: "Sirius", x: 200, y: 150, completada: false, pergunta: "Qual a estrela mais brilhante?", resposta: "Sirius" },
-    { nome: "Andromeda", x: 500, y: 300, completada: false, pergunta: "Andromeda é uma galáxia ou planeta?", resposta: "Galáxia" },
-    { nome: "Pegasus", x: 800, y: 100, completada: false, pergunta: "Em qual constelação está Pegasus?", resposta: "Pegaso" }
-];
+// Adicionando ao código anterior
+const personagem = {
+    img: new Image(),
+    x: 50, // Começa na "Terra" (canto inferior)
+    y: 500,
+    largura: 40,
+    altura: 40,
+    velocidade: 4,
+    alvo: null // Estrela para onde o personagem está indo
+};
+personagem.img.src = 'link_da_sua_imagem_aqui.png'; // Use a imagem que você subiu
 
-// 1. Criação das Estrelas Animadas
-function criarEstrelas() {
-    for (let i = 0; i < 150; i++) {
-        estrelas.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            tamanho: Math.random() * 2,
-            brilho: Math.random(),
-            velocidadeBrilho: 0.02 + Math.random() * 0.05
-        });
+// 3. Sistema de Voo e Colisão
+function atualizarMovimento() {
+    if (personagem.alvo) {
+        const dx = personagem.alvo.x - personagem.x;
+        const dy = personagem.alvo.y - personagem.y;
+        const distancia = Math.sqrt(dx * dx + dy * dy);
+
+        if (distancia > 5) {
+            personagem.x += (dx / distancia) * personagem.velocidade;
+            personagem.y += (dy / distancia) * personagem.velocidade;
+        } else {
+            // Chegou na estrela!
+            verificarMissao(personagem.alvo);
+            personagem.alvo = null;
+        }
     }
 }
 
-// 2. Desenho e Animação
-function desenharCenario() {
-    // Fundo Espacial
-    ctx.fillStyle = '#050a1a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+// 4. Interface de Missão (Amarelo Sólido)
+function verificarMissao(astro) {
+    if (astro.completada) return;
 
-    // Desenhar Estrelas com Brilho
-    estrelas.forEach(estrela => {
-        ctx.fillStyle = `rgba(255, 255, 255, ${estrela.brilho})`;
-        ctx.beginPath();
-        ctx.arc(estrela.x, estrela.y, estrela.tamanho, 0, Math.PI * 2);
-        ctx.fill();
+    const respostaUsuario = prompt(`Missão ${astro.nome}: ${astro.pergunta}`);
+    
+    if (respostaUsuario && respostaUsuario.toLowerCase() === astro.resposta.toLowerCase()) {
+        alert("Missão Concluída! Você subiu de nível.");
+        astro.completada = true;
+        // Aqui você pode disparar a animação de Level Up
+    } else {
+        alert("Resposta incorreta. Tente novamente!");
+    }
+}
 
-        // Lógica de Piscar
-        estrela.brilho += estrela.velocidadeBrilho;
-        if (estrela.brilho > 1 || estrela.brilho < 0.2) {
-            estrela.velocidadeBrilho *= -1;
+// 5. Clique para Voar
+canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Verifica se clicou em alguma estrela
+    missoes.forEach(astro => {
+        const d = Math.sqrt((mouseX - astro.x)**2 + (mouseY - astro.y)**2);
+        if (d < 20) {
+            personagem.alvo = astro;
         }
     });
+});
 
-    // Desenhar Destinos das Missões
-    missoes.forEach(astro => {
-        ctx.fillStyle = astro.completada ? '#ffff00' : '#ffffff'; // Amarelo se completada
-        ctx.beginPath();
-        ctx.arc(astro.x, astro.y, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillText(astro.nome, astro.x - 20, astro.y + 25);
-    });
-}
+// Atualização do Desenho
+function desenhar() {
+    desenharCenario(); // Aquelas estrelas que piscam que fizemos antes
+    
+    // Desenhar Personagem
+    ctx.drawImage(personagem.img, personagem.x, personagem.y, personagem.largura, personagem.altura);
+    
+    // UI de Level (Amarelo Sólido)
+    ctx.fillStyle = "#ffff00"; 
+    ctx.fillRect(10, 10, 150, 30);
+    ctx.fillStyle = "#000";
+    ctx.fillText("CLUBE SIRIUS - LVL 1", 20, 30);
 
-// Inicialização
-criarEstrelas();
-function loop() {
-    desenharCenario();
-    requestAnimationFrame(loop);
+    atualizarMovimento();
+    requestAnimationFrame(desenhar);
 }
-loop();
+desenhar();
