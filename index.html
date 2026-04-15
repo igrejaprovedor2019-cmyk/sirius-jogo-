@@ -9,97 +9,140 @@
         :root {
             --primary: #FFD700; /* Amarelo sólido solicitado */
             --bg-dark: #02060B;
-            --accent: #1a2a4a;
+            --panel-bg: rgba(2, 6, 23, 0.95);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html { height: 100%; background: var(--bg-dark); color: #fff; font-family: 'Rajdhani', sans-serif; overflow: hidden; }
 
-        /* Background Profissional */
-        #space-background {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to top, #050a14, #02060b);
-            z-index: 1;
+        /* --- BACKGROUND GALÁXIA --- */
+        #galaxy-map {
+            position: absolute; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #0a1e3c 0%, #000 100%);
+            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1), filter 1s;
         }
 
-        .bg-image {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('Airbrush-IMAGE-ENHANCER-1772282903019-1772282903019 (1).jpg');
-            background-size: cover;
-            background-position: center;
-            opacity: 0.15;
-            z-index: 2;
+        .star-nebula {
+            position: absolute; border-radius: 50%; background: white;
+            opacity: 0.4; animation: twinkle 3s infinite alternate;
         }
 
-        /* Personagem Desbravador Animado */
-        #player {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            transition: all 2.5s cubic-bezier(0.19, 1, 0.22, 1);
-            z-index: 10;
-            display: none;
-            text-align: center;
+        /* --- DESBRAVADOR (O JOGADOR) --- */
+        #pathfinder {
+            position: absolute; width: 45px; height: 65px;
+            bottom: 30px; left: 50%; transform: translateX(-50%);
+            transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 500; display: none;
+        }
+        .pf-head { 
+            width: 100%; height: 100%; background: #111; border-radius: 8px 8px 15px 15px;
+            position: relative; border: 2px solid #222; overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        .pf-scarf { 
+            position: absolute; top: 15px; width: 100%; height: 18px; 
+            background: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
-        #player img {
-            width: 70px;
-            filter: drop-shadow(0 0 10px var(--primary));
-            animation: float 2s ease-in-out infinite;
+        /* --- VISÃO DE SUPERFÍCIE (PLANETA/ESTRELA) --- */
+        #surface-view {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, #000 0%, #0c1a31 100%);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .horizon {
+            position: absolute; bottom: 0; width: 150%; height: 35%;
+            background: #050505; border-top: 4px solid #111;
+            border-radius: 50% 50% 0 0; left: -25%;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
+        /* Versão de pouso do desbravador */
+        .pf-pouso { position: absolute; bottom: 30%; transform: scale(1.5) translateX(-30%); z-index: 1100; width: 45px;}
+
+        /* --- UI DE MISSÃO --- */
+        #mission-panel {
+            position: relative; width: 500px;
+            background: var(--panel-bg);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            padding: 40px; border-radius: 24px;
+            text-align: center; backdrop-filter: blur(15px);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            z-index: 1200; transform: translateY(-30px);
         }
 
-        /* HUD - Interface de Missão */
-        #hud-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90%;
-            max-width: 550px;
-            background: rgba(13, 20, 36, 0.95);
-            border: 2px solid var(--primary);
-            padding: 40px;
-            border-radius: 8px;
-            text-align: center;
-            z-index: 100;
-            box-shadow: 0 0 50px rgba(0,0,0,0.9);
-        }
+        #mission-panel h2 { font-family: 'Orbitron'; color: var(--gold); letter-spacing: 4px; margin: 0 0 5px 0; }
+        #mission-panel h4 { font-family: 'Outfit'; color: #475569; margin: 0 0 20px 0; font-weight: 300;}
+        #mission-panel p { font-size: 1.1rem; color: #cbd5e1; line-height: 1.6; min-height: 80px; margin-bottom: 25px;}
 
-        .logo-hud { width: 100px; margin-bottom: 20px; }
+        .loading-track {
+            width: 100%; height: 8px; background: #0f172a; border-radius: 4px;
+            margin: 20px 0; overflow: hidden; border: 1px solid #1e293b;
+        }
+        .loading-fill { width: 0%; height: 100%; background: var(--gold); transition: width 1s ease; box-shadow: 0 0 15px var(--gold); }
+
+        .input-wrapper input {
+            width: 85%; padding: 15px; background: #020617; border: 1px solid #334155;
+            color: white; border-radius: 12px; font-size: 1.1rem; text-align: center;
+            outline: none; transition: 0.3s;
+        }
+        .input-wrapper input:focus { border-color: var(--gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
+
+        .btn-boost {
+            margin-top: 25px; width: 100%; padding: 18px;
+            background: var(--gold); color: #000; font-family: 'Orbitron';
+            font-weight: bold; border: none; border-radius: 12px;
+            cursor: pointer; display: none; transition: 0.3s;
+        }
+        .btn-boost:hover { background: white; transform: scale(1.02); }
+
+        #status-msg { margin-top: 15px; font-size: 0.9rem; font-weight: 600; letter-spacing: 1px; }
+
+        /* --- TELA FINAL (SUA IMAGEM DO ABENÇOADO) --- */
+        #final-screen {
+            display: none; position: fixed; inset: 0; background: #000;
+            z-index: 2000; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #final-screen img { width: 90%; max-width: 650px; border-radius: 20px; border: 4px solid var(--gold); box-shadow: 0 0 60px rgba(255, 215, 0, 0.3); }
+
+        @keyframes twinkle { from { opacity: 0.2; } to { opacity: 0.7; } }
+    </style>
+</head>
+<body>
+
+<div id="galaxy-map">
+    </div>
+
+<div id="pathfinder">
+    <div class="pf-head">
+        <div class="pf-scarf"></div>
+    </div>
+</div>
+
+<div id="surface-view">
+    <div class="horizon"></div>
+    <div class="pf-pouso">
+        <div class="pf-head" style="width: 45px; height: 65px;">
+            <div class="pf-scarf"></div>
+        </div>
+    </div>
+
+    <div id="mission-panel">
+        <h2 id="star-name">NOME DA ESTRELA</h2>
+        <h4 id="star-mode">MODO JORNADA</h4>
+        <p id="star-mission">Aguardando conexão estelar...</p>
         
-        h2 { font-family: 'Orbitron', sans-serif; color: var(--primary); letter-spacing: 5px; margin-bottom: 20px; }
+        <div class="loading-track"><div class="loading-fill" id="progress"></div></div>
         
-        .mission-text { font-size: 1.4rem; margin-bottom: 30px; color: #E2E8F0; min-height: 100px; }
+        <div class="input-wrapper">
+            <input type="text" id="user-ans" placeholder="DIGITE A RESPOSTA..." autocomplete="off">
+            <div id="status-msg"></div>
+            <button class="btn-boost" id="btn-up" onclick="takeOff()">SUBIR PARA A PRÓXIMA ↑</button>
+        </div>
+    </div>
+</div>
 
-        .btn-game {
-            background: var(--primary);
-            color: #000;
-            border: none;
-            padding: 18px 40px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            cursor: pointer;
-            text-transform: uppercase;
-            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
-            transition: 0.3s;
-        }
-
-        .btn-game:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4); }
-
-        /* Tela Final */
-        #victory-screen {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
-            z-index: 2000;
-            flex-direction
+<div id="final-screen">
+    <h1 style="font-family:'Orbitron'; color:var(--gold); font-size: 2.5rem; margin-bottom: 10px;">JORNADA CONCLUÍDA</h1>
+    <p style="font-size: 1.2rem; margin-bottom: 30px;">"Você completou tudo e foi abençoado(a)!"</p>
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAwAAAAIACAYAAAA19gs6AAAQAElEQVR4AezcS3JkSW4FUKq1PmlQK5FWIq2kBtL69ClWVlbSSUbE+/gHgJ+2zkwi4j134ICTa23W/3jzHwIECBAgQIAAAQIEthEQALZZtUEJfBZQEyBAgAABAjsKCAA7bt3MBAgQILC3gOkJENhaQADYev2GJ0CAAAECBAgQ2EngfVYB4F3BHwIECBAgQIAAAQKbCAgAmyzamARaARUBAgQIECCwq4AAsOvmzU2AAAECewqYmgCB7QUEgO1/BQAQIECAAAECBAjsIPBzRgHgp4R/CRAgQIAAAQIECGwgIABssGQjEmgFVAQIECBAgMDOAgLAzts3OwECBAjsJWBaAgQI/CEgAPyB4L8ECBAgQIAAAQIEKgt8nE0A+KjhZwIECBAgQIAAAQLFBQSA4gs2HoFWQRWAAAECBAjsLiAA7P4bYH4CBAgQ2EPAlAQIEPhLQAD4C8I/BAgQIECAAAECBCoKfJ5JAPgsoiZAgAABAgQIECBQWE
