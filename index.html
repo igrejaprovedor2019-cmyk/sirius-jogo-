@@ -4,35 +4,81 @@
     <meta charset="UTF-8">
     <title>Clube Sirius - Missão Espacial</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #050a1a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        canvas { display: block; cursor: crosshair; }
-        
-        /* Interface no estilo Amarelo Sólido que você pediu */
-        #ui-camada {
+        body { margin: 0; overflow: hidden; background: #050a1a; font-family: 'Arial', sans-serif; }
+        canvas { display: block; }
+
+        /* Interface Principal Amarela */
+        #interface-jogo {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: #ffff00; /* Amarelo sem transparência */
-            padding: 15px;
-            border: 2px solid #000;
-            color: #000;
+            background: #ffff00;
+            padding: 10px 20px;
+            border: 3px solid #000;
             font-weight: bold;
-            text-transform: uppercase;
-            box-shadow: 5px 5px 0px #000;
+            box-shadow: 4px 4px 0px #000;
+            z-index: 10;
         }
 
-        #missao-status {
-            margin-top: 5px;
-            font-size: 12px;
-            color: #333;
+        /* Caixa de Diálogo do Desbravador */
+        #caixa-dialogo {
+            display: none; /* Escondida por padrão */
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            background: #ffff00;
+            border: 4px solid #000;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 8px 8px 0px #000;
+            z-index: 20;
+        }
+
+        .avatar-desbravador {
+            width: 80px;
+            height: 80px;
+            background: #fff;
+            border: 2px solid #000;
+        }
+
+        .conteudo-texto { flex: 1; }
+        
+        button {
+            background: #000;
+            color: #ffff00;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        button:hover { background: #333; }
+
+        #input-resposta {
+            padding: 8px;
+            border: 2px solid #000;
+            width: 100%;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
 
-    <div id="ui-camada">
-        <div>Clube Sirius - Comandante</div>
-        <div id="missao-status">Status: Aguardando Destino</div>
+    <div id="interface-jogo">CLUBE SIRIUS | NÍVEL: <span id="lvl">1</span></div>
+
+    <div id="caixa-dialogo" style="display: none;">
+        <img src="link_do_seu_desbravador.png" class="avatar-desbravador" alt="D">
+        <div class="conteudo-texto">
+            <p id="texto-missao">Comandante, chegamos! Qual o nome desta galáxia?</p>
+            <input type="text" id="input-resposta" placeholder="Digite sua resposta...">
+            <button onclick="verificarResposta()">AVANÇAR</button>
+        </div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -40,132 +86,107 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        // --- CONFIGURAÇÕES ---
-        let estrelasDeFundo = [];
         let nivel = 1;
-        
-        const missoes = [
-            { nome: "Sirius", x: canvas.width * 0.2, y: canvas.height * 0.2, completada: false, pergunta: "Qual a estrela mais brilhante do céu noturno?", resposta: "Sirius" },
-            { nome: "Andromeda", x: canvas.width * 0.7, y: canvas.height * 0.4, completada: false, pergunta: "Andromeda é uma galáxia ou um planeta?", resposta: "Galáxia" },
-            { nome: "Pegasus", x: canvas.width * 0.4, y: canvas.height * 0.8, completada: false, pergunta: "Em qual constelação está a estrela 51 Pegasi?", resposta: "Pegaso" }
+        let missaoAtual = null;
+        let estrelasFundo = [];
+
+        // As 5 estrelas (Sirius é a última)
+        const destinos = [
+            { nome: "Alpha Centauri", x: 200, y: 300, pergunta: "Qual o planeta mais próximo do Sol?", resposta: "Mercurio", concluida: false },
+            { nome: "Vega", x: 500, y: 150, pergunta: "O Sol é uma estrela? (Sim ou Não)", resposta: "Sim", concluida: false },
+            { nome: "Andromeda", x: 800, y: 400, pergunta: "Quantos planetas tem o Sistema Solar?", resposta: "8", concluida: false },
+            { nome: "Pegasus", x: 400, y: 600, pergunta: "O que é um buraco negro?", resposta: "Estrela", concluida: false },
+            { nome: "Sirius", x: canvas.width/2, y: canvas.height/2, pergunta: "Qual a estrela principal do Clube Sirius?", resposta: "Sirius", concluida: false }
         ];
 
-        const player = {
-            x: canvas.width / 2,
-            y: canvas.height - 100,
-            tamanho: 40,
-            alvo: null,
-            velocidade: 5
+        const desbravador = {
+            x: 50, y: canvas.height - 100,
+            alvoX: 50, alvoY: canvas.height - 100,
+            voando: false
         };
 
-        // --- LÓGICA DO CENÁRIO (ESTRELAS PISCANDO) ---
-        function criarEstrelas() {
-            for (let i = 0; i < 200; i++) {
-                estrelasDeFundo.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    tam: Math.random() * 2,
-                    brilho: Math.random(),
-                    velBrilho: 0.01 + Math.random() * 0.03
-                });
-            }
+        // Gerar Fundo
+        for(let i=0; i<150; i++) {
+            estrelasFundo.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, b: Math.random()});
         }
 
-        function desenharEspaco() {
-            ctx.fillStyle = '#050a1a';
+        function desenhar() {
+            ctx.fillStyle = "#050a1a";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            estrelasDeFundo.forEach(e => {
-                ctx.fillStyle = `rgba(255, 255, 255, ${e.brilho})`;
-                ctx.beginPath();
-                ctx.arc(e.x, e.y, e.tam, 0, Math.PI * 2);
-                ctx.fill();
-
-                e.brilho += e.velBrilho;
-                if (e.brilho > 1 || e.brilho < 0.2) e.velBrilho *= -1;
+            // Estrelas piscando
+            estrelasFundo.forEach(e => {
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(Math.sin(Date.now()*0.001 + e.x))})`;
+                ctx.fillRect(e.x, e.y, 2, 2);
             });
 
-            // Desenhar Destinos
-            missoes.forEach(m => {
-                ctx.fillStyle = m.completada ? "#ffff00" : "#ffffff";
+            // Destinos
+            destinos.forEach(d => {
+                ctx.fillStyle = d.concluida ? "#ffff00" : "#444";
                 ctx.beginPath();
-                ctx.arc(m.x, m.y, 8, 0, Math.PI * 2);
+                ctx.arc(d.x, d.y, 15, 0, Math.PI*2);
                 ctx.fill();
-                
-                ctx.font = "12px Arial";
-                ctx.fillText(m.nome.toUpperCase(), m.x - 25, m.y - 15);
+                ctx.fillStyle = "#fff";
+                ctx.fillText(d.nome, d.x - 20, d.y + 30);
             });
-        }
 
-        // --- LÓGICA DE MOVIMENTO E MISSÃO ---
-        function atualizarPlayer() {
-            if (player.alvo) {
-                const dx = player.alvo.x - player.x;
-                const dy = player.alvo.y - player.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist > 5) {
-                    player.x += (dx / dist) * player.velocidade;
-                    player.y += (dy / dist) * player.velocidade;
+            // Movimento do Desbravador
+            if(desbravador.voando) {
+                let dx = desbravador.alvoX - desbravador.x;
+                let dy = desbravador.alvoY - desbravador.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                if(dist > 5) {
+                    desbravador.x += dx/10;
+                    desbravador.y += dy/10;
                 } else {
-                    const alvoAtual = player.alvo;
-                    player.alvo = null;
-                    iniciarMissao(alvoAtual);
+                    desbravador.voando = false;
+                    abrirPainel();
                 }
             }
-        }
 
-        function iniciarMissao(astro) {
-            if (astro.completada) return;
-            
-            const resp = prompt(`MISSÃO EM ${astro.nome.toUpperCase()}\n\n${astro.pergunta}`);
-            if (resp && resp.toLowerCase() === astro.resposta.toLowerCase()) {
-                alert("SUCESSO! Você conquistou o sistema " + astro.nome);
-                astro.completada = true;
-                nivel++;
-                document.getElementById('missao-status').innerText = `Status: Nível ${nivel} Alcançado`;
-            } else {
-                alert("ERRO DE NAVEGAÇÃO! Resposta incorreta.");
-            }
+            // Desenha o Desbravador (Quadrado amarelo para teste)
+            ctx.fillStyle = "#ffff00";
+            ctx.fillRect(desbravador.x - 20, desbravador.y - 20, 40, 40);
+
+            requestAnimationFrame(desenhar);
         }
 
         canvas.addEventListener('click', (e) => {
-            missoes.forEach(m => {
-                const d = Math.sqrt((e.clientX - m.x)**2 + (e.clientY - m.y)**2);
-                if (d < 30) {
-                    player.alvo = m;
-                    document.getElementById('missao-status').innerText = `Viajando para: ${m.nome}`;
+            if(desbravador.voando) return;
+            destinos.forEach(d => {
+                let dist = Math.sqrt((e.clientX - d.x)**2 + (e.clientY - d.y)**2);
+                if(dist < 30 && !d.concluida) {
+                    missaoAtual = d;
+                    desbravador.alvoX = d.x;
+                    desbravador.alvoY = d.y;
+                    desbravador.voando = true;
                 }
             });
         });
 
-        // --- LOOP PRINCIPAL ---
-        function gameLoop() {
-            desenharEspaco();
-            
-            // Personagem (Representado por um triângulo amarelo até você colocar sua imagem)
-            ctx.fillStyle = "#ffff00";
-            ctx.beginPath();
-            ctx.moveTo(player.x, player.y - 20);
-            ctx.lineTo(player.x - 15, player.y + 15);
-            ctx.lineTo(player.x + 15, player.y + 15);
-            ctx.fill();
-
-            atualizarPlayer();
-            requestAnimationFrame(gameLoop);
+        function abrirPainel() {
+            document.getElementById('texto-missao').innerText = `Comandante, chegamos em ${missaoAtual.nome}! \n ${missaoAtual.pergunta}`;
+            document.getElementById('caixa-dialogo').style.display = 'flex';
         }
 
-        criarEstrelas();
-        gameLoop();
+        function verificarResposta() {
+            let resp = document.getElementById('input-resposta').value;
+            if(resp.toLowerCase() === missaoAtual.resposta.toLowerCase()) {
+                missaoAtual.concluida = true;
+                nivel++;
+                document.getElementById('lvl').innerText = nivel;
+                document.getElementById('caixa-dialogo').style.display = 'none';
+                document.getElementById('input-resposta').value = "";
+                alert("Missão Cumprida! Próximo destino liberado.");
+            } else {
+                alert("Resposta incorreta! Tente de novo.");
+            }
+        }
 
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
+        desenhar();
     </script>
 </body>
 </html>
