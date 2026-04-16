@@ -2,12 +2,11 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Clube Sirius - Missão Espacial</title>
+    <title>Clube Sirius - Missão Bíblica</title>
     <style>
         body { margin: 0; overflow: hidden; background: #050a1a; font-family: 'Arial', sans-serif; }
-        canvas { display: block; }
-
-        /* Interface Principal Amarela */
+        
+        /* Interface Principal Amarela Sólida */
         #interface-jogo {
             position: absolute;
             top: 20px;
@@ -20,15 +19,15 @@
             z-index: 10;
         }
 
-        /* Caixa de Diálogo do Desbravador */
+        /* Caixa de Diálogo com o Desbravador e Imagem da Pergunta */
         #caixa-dialogo {
-            display: none; /* Escondida por padrão */
+            display: none;
             position: absolute;
-            bottom: 50px;
+            bottom: 40px;
             left: 50%;
             transform: translateX(-50%);
-            width: 80%;
-            max-width: 600px;
+            width: 85%;
+            max-width: 700px;
             background: #ffff00;
             border: 4px solid #000;
             padding: 20px;
@@ -39,33 +38,35 @@
             z-index: 20;
         }
 
-        .avatar-desbravador {
-            width: 80px;
-            height: 80px;
+        .img-referencia {
+            width: 120px;
+            height: 120px;
+            border: 3px solid #000;
+            object-fit: cover;
             background: #fff;
-            border: 2px solid #000;
         }
 
         .conteudo-texto { flex: 1; }
         
+        input {
+            padding: 10px;
+            border: 2px solid #000;
+            width: 90%;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
         button {
             background: #000;
             color: #ffff00;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 25px;
             cursor: pointer;
             font-weight: bold;
-            text-transform: uppercase;
+            transition: 0.2s;
         }
 
-        button:hover { background: #333; }
-
-        #input-resposta {
-            padding: 8px;
-            border: 2px solid #000;
-            width: 100%;
-            margin-bottom: 10px;
-        }
+        button:hover { background: #333; transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -73,10 +74,13 @@
     <div id="interface-jogo">CLUBE SIRIUS | NÍVEL: <span id="lvl">1</span></div>
 
     <div id="caixa-dialogo" style="display: none;">
-        <img src="link_do_seu_desbravador.png" class="avatar-desbravador" alt="D">
+        <img id="logo-pergunta" src="" class="img-referencia">
+        
         <div class="conteudo-texto">
-            <p id="texto-missao">Comandante, chegamos! Qual o nome desta galáxia?</p>
-            <input type="text" id="input-resposta" placeholder="Digite sua resposta...">
+            <h3 id="titulo-astro" style="margin: 0 0 10px 0;"></h3>
+            <p id="texto-missao"></p>
+            <input type="text" id="input-resposta" placeholder="Sua resposta...">
+            <br>
             <button onclick="verificarResposta()">AVANÇAR</button>
         </div>
     </div>
@@ -93,13 +97,13 @@
         let missaoAtual = null;
         let estrelasFundo = [];
 
-        // As 5 estrelas (Sirius é a última)
+        // 5 Estrelas com Perguntas Bíblicas e Termos de Busca para Imagem
         const destinos = [
-            { nome: "Alpha Centauri", x: 200, y: 300, pergunta: "Qual o planeta mais próximo do Sol?", resposta: "Mercurio", concluida: false },
-            { nome: "Vega", x: 500, y: 150, pergunta: "O Sol é uma estrela? (Sim ou Não)", resposta: "Sim", concluida: false },
-            { nome: "Andromeda", x: 800, y: 400, pergunta: "Quantos planetas tem o Sistema Solar?", resposta: "8", concluida: false },
-            { nome: "Pegasus", x: 400, y: 600, pergunta: "O que é um buraco negro?", resposta: "Estrela", concluida: false },
-            { nome: "Sirius", x: canvas.width/2, y: canvas.height/2, pergunta: "Qual a estrela principal do Clube Sirius?", resposta: "Sirius", concluida: false }
+            { nome: "Estrela 1", x: 200, y: 400, busca: "bible-ark", pergunta: "Quem construiu a arca?", resposta: "Noe", concluida: false },
+            { nome: "Estrela 2", x: 500, y: 200, busca: "david-goliath", pergunta: "Quem derrotou o gigante Golias?", resposta: "Davi", concluida: false },
+            { nome: "Estrela 3", x: 800, y: 500, busca: "moses-sea", pergunta: "Quem abriu o Mar Vermelho?", resposta: "Moises", concluida: false },
+            { nome: "Estrela 4", x: 1000, y: 200, busca: "lion-daniel", pergunta: "Quem foi jogado na cova dos leões?", resposta: "Daniel", concluida: false },
+            { nome: "SIRIUS", x: canvas.width/2, y: canvas.height/2, busca: "jesus-cross", pergunta: "Quem é o caminho, a verdade e a vida?", resposta: "Jesus", concluida: false }
         ];
 
         const desbravador = {
@@ -108,8 +112,8 @@
             voando: false
         };
 
-        // Gerar Fundo
-        for(let i=0; i<150; i++) {
+        // Criar estrelas animadas para o fundo
+        for(let i=0; i<180; i++) {
             estrelasFundo.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, b: Math.random()});
         }
 
@@ -117,39 +121,45 @@
             ctx.fillStyle = "#050a1a";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Estrelas piscando
             estrelasFundo.forEach(e => {
                 ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(Math.sin(Date.now()*0.001 + e.x))})`;
                 ctx.fillRect(e.x, e.y, 2, 2);
             });
 
-            // Destinos
             destinos.forEach(d => {
-                ctx.fillStyle = d.concluida ? "#ffff00" : "#444";
+                ctx.fillStyle = d.concluida ? "#ffff00" : "#ffffff33";
                 ctx.beginPath();
-                ctx.arc(d.x, d.y, 15, 0, Math.PI*2);
+                ctx.arc(d.x, d.y, 18, 0, Math.PI*2);
                 ctx.fill();
+                ctx.strokeStyle = "#fff";
+                ctx.stroke();
+                
                 ctx.fillStyle = "#fff";
-                ctx.fillText(d.nome, d.x - 20, d.y + 30);
+                ctx.font = "bold 12px Arial";
+                ctx.fillText(d.nome, d.x - 30, d.y + 35);
             });
 
-            // Movimento do Desbravador
             if(desbravador.voando) {
                 let dx = desbravador.alvoX - desbravador.x;
                 let dy = desbravador.alvoY - desbravador.y;
                 let dist = Math.sqrt(dx*dx + dy*dy);
                 if(dist > 5) {
-                    desbravador.x += dx/10;
-                    desbravador.y += dy/10;
+                    desbravador.x += dx/15;
+                    desbravador.y += dy/15;
                 } else {
                     desbravador.voando = false;
-                    abrirPainel();
+                    exibirMissao();
                 }
             }
 
-            // Desenha o Desbravador (Quadrado amarelo para teste)
+            // O Desbravador (Representado por um círculo amarelo brilhante)
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#ffff00";
             ctx.fillStyle = "#ffff00";
-            ctx.fillRect(desbravador.x - 20, desbravador.y - 20, 40, 40);
+            ctx.beginPath();
+            ctx.arc(desbravador.x, desbravador.y, 12, 0, Math.PI*2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
 
             requestAnimationFrame(desenhar);
         }
@@ -158,7 +168,7 @@
             if(desbravador.voando) return;
             destinos.forEach(d => {
                 let dist = Math.sqrt((e.clientX - d.x)**2 + (e.clientY - d.y)**2);
-                if(dist < 30 && !d.concluida) {
+                if(dist < 40 && !d.concluida) {
                     missaoAtual = d;
                     desbravador.alvoX = d.x;
                     desbravador.alvoY = d.y;
@@ -167,22 +177,25 @@
             });
         });
 
-        function abrirPainel() {
-            document.getElementById('texto-missao').innerText = `Comandante, chegamos em ${missaoAtual.nome}! \n ${missaoAtual.pergunta}`;
+        function exibirMissao() {
+            // Pega uma imagem da web baseada no tema da pergunta
+            document.getElementById('logo-pergunta').src = `https://source.unsplash.com/featured/?${missaoAtual.busca}`;
+            document.getElementById('titulo-astro').innerText = missaoAtual.nome;
+            document.getElementById('texto-missao').innerText = missaoAtual.pergunta;
             document.getElementById('caixa-dialogo').style.display = 'flex';
         }
 
         function verificarResposta() {
-            let resp = document.getElementById('input-resposta').value;
-            if(resp.toLowerCase() === missaoAtual.resposta.toLowerCase()) {
+            let entrada = document.getElementById('input-resposta').value.trim();
+            if(entrada.toLowerCase() === missaoAtual.resposta.toLowerCase()) {
                 missaoAtual.concluida = true;
                 nivel++;
                 document.getElementById('lvl').innerText = nivel;
                 document.getElementById('caixa-dialogo').style.display = 'none';
                 document.getElementById('input-resposta').value = "";
-                alert("Missão Cumprida! Próximo destino liberado.");
+                alert("Parabéns, Desbravador! Missão concluída.");
             } else {
-                alert("Resposta incorreta! Tente de novo.");
+                alert("Ops! Resposta incorreta. Tente novamente.");
             }
         }
 
